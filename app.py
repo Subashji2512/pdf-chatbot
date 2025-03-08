@@ -45,14 +45,14 @@ def get_conversational_chain():
     Question: \n{question}\n
     Answer:
     """
-    model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.3)
+    model = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.3)
     prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
     chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
     return chain
 
 def user_input(user_question):
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-    new_db = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
+    new_db = FAISS.load_local("faiss_index", embeddings)
     docs = new_db.similarity_search(user_question)
     chain = get_conversational_chain()
     response = chain.invoke({"input_documents": docs, "question": user_question})
@@ -60,7 +60,7 @@ def user_input(user_question):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index1.html')
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -91,4 +91,4 @@ def ask():
 
 if __name__ == '__main__':
     os.makedirs('uploads', exist_ok=True)
-    app.run(debug=True)
+    app.run(debug=True,use_reloader=False)

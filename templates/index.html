@@ -10,28 +10,64 @@
 <body>
     <div class="container mt-5">
         <h1 class="text-center">Chat with PDF using Gemini 💁</h1>
+        
+        <!-- PDF Upload Section -->
         <div class="form-group">
             <label for="pdf_files">Upload PDF Files</label>
             <input type="file" id="pdf_files" class="form-control" multiple>
+            <ul id="file_list" class="list-group mt-2"></ul>
             <button id="upload_button" class="btn btn-primary mt-3">Submit & Process</button>
         </div>
+        
+        <!-- Question Input Section -->
         <div class="form-group">
             <label for="user_question">Ask a Question</label>
             <input type="text" id="user_question" class="form-control">
             <button id="ask_button" class="btn btn-success mt-3">Ask</button>
         </div>
+        
+        <!-- Chat History -->
         <div id="chat_history" class="mt-5"></div>
     </div>
 
     <script>
         $(document).ready(function() {
-            $('#upload_button').click(function() {
-                var files = $('#pdf_files')[0].files;
-                var formData = new FormData();
-                for (var i = 0; i < files.length; i++) {
-                    formData.append('pdf_files', files[i]);
+            let fileList = [];
+            
+            // Handle file selection
+            $('#pdf_files').change(function(event) {
+                let files = event.target.files;
+                $('#file_list').empty(); // Clear previous file list
+                fileList = [];
+                
+                for (let i = 0; i < files.length; i++) {
+                    fileList.push(files[i]);
+                    $('#file_list').append(
+                        `<li class="list-group-item d-flex justify-content-between align-items-center">
+                            ${files[i].name}
+                            <button class="btn btn-danger btn-sm remove-file" data-index="${i}">Remove</button>
+                        </li>`
+                    );
                 }
-
+            });
+            
+            // Remove file from list
+            $(document).on('click', '.remove-file', function() {
+                let index = $(this).data('index');
+                fileList.splice(index, 1);
+                $(this).parent().remove();
+            });
+            
+            // Upload files
+            $('#upload_button').click(function() {
+                if (fileList.length === 0) {
+                    alert('Please select at least one PDF file to upload.');
+                    return;
+                }
+                
+                let formData = new FormData();
+                fileList.forEach(file => formData.append('pdf_files', file));
+                
                 $.ajax({
                     url: '/upload',
                     type: 'POST',
@@ -46,19 +82,20 @@
                     }
                 });
             });
-
+            
+            // Handle asking a question
             $('#ask_button').click(function() {
-                var userQuestion = $('#user_question').val();
+                let userQuestion = $('#user_question').val();
                 if (userQuestion) {
                     $.ajax({
                         url: '/ask',
                         type: 'POST',
                         contentType: 'application/json',
-                        data: JSON.stringify({question: userQuestion}),
+                        data: JSON.stringify({ question: userQuestion }),
                         success: function(response) {
-                            var chatHistory = $('#chat_history');
-                            chatHistory.append('<p><strong>Question:</strong> ' + userQuestion + '</p>');
-                            chatHistory.append('<p><strong>Answer:</strong> ' + response.answer.replace(/\n/g, '<br>') + '</p>');
+                            let chatHistory = $('#chat_history');
+                            chatHistory.append(`<p><strong>Question:</strong> ${userQuestion}</p>`);
+                            chatHistory.append(`<p><strong>Answer:</strong> ${response.answer.replace(/\n/g, '<br>')}</p>`);
                         },
                         error: function(response) {
                             alert('Error: ' + response.responseJSON.error);

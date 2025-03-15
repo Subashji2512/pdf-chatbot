@@ -38,13 +38,26 @@ def get_vector_store(text_chunks):
 
 def get_conversational_chain():
     prompt_template = """
-    Answer the question as detailed as possible from the provided context, make sure to provide all the details. If the answer is not in
-    the provided context, just say, "The answer is not in the provided context. Please try asking another question."
-    
+    Answer the question as detailed as possible from the provided context. Make sure to include all relevant details. 
+    If the answer is not in the provided context, follow these steps:  
+    1. Acknowledge that the answer is not in the provided context.  
+    2. Provide any relevant general information related to the question if possible.  
+    3. Suggest similar topics or related questions that might be helpful.  
+    4. Encourage the user to ask another question if they need further assistance.  
+
     Context:\n {context}?\n
-    Question: \n{question}\n
+
+    Question:\n {question}\n
+
     Answer:
-    """
+
+    If the answer is not in the provided context:
+    - "The answer is not in the provided context. However, here is some general information that may help:"
+    - "give some information from the browser or any source"
+    - "You might also find these topics useful: "
+    - " Give some topics similar to the topics in which the question is asked"
+    - "If you need further assistance, please leave your question, and I'll be happy to help!"
+"""
     model = ChatGoogleGenerativeAI(model="gemini-1.5-pro-latest", temperature=0.3)
     prompt = PromptTemplate(template=prompt_template, input_variables=["context", "question"])
     chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
